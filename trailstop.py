@@ -1,10 +1,14 @@
-#!/bin/env python2
+#!/bin/env python
 
 import sys
 import argparse
 import csv
 import smtplib
-from urllib2 import Request, urlopen
+if int(sys.version[0]) < 3:
+    from urllib2 import Request, urlopen
+else:
+    from urllib.request import Request, urlopen
+
 
 def request(symbol, stat):
     """from https://github.com/cgoldberg/ystockquote/blob/master/ystockquote.py
@@ -79,7 +83,6 @@ def update(l, p):
             v = (stv - p)/stv*100
 
         direction = v < 0 and 'away from' or 'beyond'
-        v = abs(v)
         report += ' %s its hard stop price of $%.2f.' % (direction, stv)
 
     report = report % (sym, v)
@@ -192,7 +195,7 @@ if args.addr and args.passw:
     subj = '%sTrail Stop Portfolio Report' % (alerts and '[ALERTS]' or '')
     send(args.smtp, args.addr, args.passw, subj, report)
 else:
-    print report
+    sys.stdout.write(report)
 
    
 
