@@ -27,10 +27,13 @@ Instructions:
 
 2. Add high, low, and stop to folio.csv
 
-   a. High is the highest closing price for the security since you entered the        trade.
+   a. High is the highest closing price for the security since you entered the
+      trade. This is entered once by hand, then updated automatically every day.
+      If you just entered the trade today, then use your entry price.
 
    b. Low is the lowest closing price for the security since you entered the
-      trade.
+      trade. This is entered once by hand, then updated automatically every day.
+      If you just entered the trade today, then use your entry price.
 
    c. Stop takes the following format:
 
