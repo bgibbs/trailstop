@@ -152,7 +152,7 @@ parser.add_argument('-i', '--start', default = False,
                'With a default stop and last price  as high/low');
 parser.add_argument('-f', '--folio', default = 'folio.csv',
         help = 'Your portfolio CSV file. Initialize this file or add to it '
-               'using -yahoo option.  Edit it by hand to maintain your stop '
+               'using --start option.  Edit it by hand to maintain your stop '
                'losses')
 parser.add_argument('-s', '--default_stop', default = '-20%',
         help = 'Default stop loss.  Used only with --start when initializing.')

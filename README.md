@@ -41,18 +41,18 @@ Instructions:
 
 3. Test from the command line.
 
-   python2 trailstop.py
+   > python trailstop.py
 
    You should see the daily update.
 
 4. Enter it into crontab (Linux instructions)
 
-   crontab -e
+   > crontab -e
 
-   0 17 * * 1-5    cd /home/<name>/Projects/trailstop; ./trailstop.py \
-                      -a <nnn>@gmail.com -p <password> 
+   > 0 17 * * 1-5    cd /home/<name>/Projects/trailstop; ./trailstop.py \
+   >                   -a <nnn>@gmail.com -p <password> 
 
    This example runs every day at 5 PM and send the report to <nnn>@gmail.com
 
-5. If you don't use gmail, then figure out the smpt address for you mail
+5. If you don't use gmail, then figure out the smtp address for your mail
    server and pass it with the --smtp option.
