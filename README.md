@@ -47,12 +47,14 @@ Instructions:
 
 4. Enter it into crontab (Linux instructions)
 
-   > crontab -e
+   ```
+   crontab -e
 
-   > 0 17 * * 1-5    cd /home/<name>/Projects/trailstop; ./trailstop.py \
-   >                   -a <nnn>@gmail.com -p <password> 
+   0 17 * * 1-5    cd /home/<homedir>/Projects/trailstop; ./trailstop.py \
+                      -a <name>@gmail.com -p <password> 
+   ```
 
-   This example runs every day at 5 PM and send the report to <nnn>@gmail.com
+   This example runs every day at 5 PM and send the report to `<name>@gmail.com`
 
 5. If you don't use gmail, then figure out the smtp address for your mail
    server and pass it with the --smtp option.
