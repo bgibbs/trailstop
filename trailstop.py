@@ -41,49 +41,47 @@ def update(l, p):
     # Negatives are good so are listed last.
     # Positives represent losses and deserve the most attention.
 
+    # trail value is used for consistent sorting
+    if sgn:
+        # stop on price increase - short position
+        # Want to cover the short when the price increases from its low.
+        # so measure the price against the low.
+        v = (p - low)/low*100
+        if v < 0:
+            report += ' below its low.'
+        else:
+            report += ' above its low.'
+    else:
+        # Stop on price decrease - long position.
+        # Sell when price drops below its high. 
+        v = (high - p)/high*100
+
+        if v < 0:
+            report += ' above its high.'
+        else:
+            report += ' below its high.'
+
     if len(stl) > 1:
         # This is a percent trailing stop
         if sgn:
-            # stop on price increase - short position
-            # Want to cover the short when the price increases from its low.
-            # so measure the price against the low.
-            v = (p - low)/low*100
-            if v >= stv:
+            if v >= stv-1:
                 alert = '%6s: %s stop gain triggered.' % (sym, stop)
-            if v < 0:
-                report += ' below its low.'
-            else:
-                report += ' above its low.'
         else:
-            # Stop on price decrease - long position.
-            # Sell when price drops below its high. 
-            v = (high - p)/high*100
             if v >= stv:
                 alert = '%6s: %s stop loss triggered.' % (sym, stop)
-
-            if v < 0:
-                report += ' above its high.'
-            else:
-                report += ' below its high.'
-
     else:
         # This is a hard-stop
         if sgn:
             # stop in price increase for a short position
             if p >= stv:
                 alert = '%6s: has exceeded stop price of %.2f.' % (sym, stv)
-
-            v = (p - stv)/stv*100
         else:
             # stop on price decrease for a long position
             if p <= stv:
                 alert = '%6s: has dropped below its stop price of %.2f.' % \
                         (sym, stv)
 
-            v = (stv - p)/stv*100
-
-        direction = v < 0 and 'away from' or 'beyond'
-        report += ' %s its hard stop price of $%.2f.' % (direction, stv)
+        report += ' $%.2f from hard stop of $%.2f.' % (p-stv, stv)
 
     report = report % (sym, v)
 
