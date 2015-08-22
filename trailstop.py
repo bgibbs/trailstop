@@ -10,7 +10,7 @@ else:
     from urllib.request import Request, urlopen
 
 
-def request(symbol, stat):
+def _request(symbol, stat):
     """from https://github.com/cgoldberg/ystockquote/blob/master/ystockquote.py
     l1 = last trade price: closing price if after 4PM
     p = previous close: 2 days old if after 4.
@@ -21,6 +21,15 @@ def request(symbol, stat):
     req = Request(url)
     resp = urlopen(req)
     content = resp.read().decode().strip()
+    return content
+
+import re
+def request(symbol, stat):
+    url = 'http://www.google.com/finance/info?q=%s&' % (symbol)
+    req = Request(url)
+    resp = urlopen(req)
+    content = resp.read().decode().strip().splitlines()
+    content = float(re.findall('[\d.]+', content[6])[0])
     return content
 
 def update(l, p):
