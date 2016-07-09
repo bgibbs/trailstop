@@ -10,7 +10,7 @@ else:
     from urllib.request import Request, urlopen
 
 
-def _request(symbol, stat):
+def yahoo_request(symbol, stat):
     """from https://github.com/cgoldberg/ystockquote/blob/master/ystockquote.py
     l1 = last trade price: closing price if after 4PM
     p = previous close: 2 days old if after 4.
@@ -24,11 +24,13 @@ def _request(symbol, stat):
     return content
 
 import re
-def request(symbol, stat):
+def google_request(symbol, stat):
     url = 'http://www.google.com/finance/info?q=%s&' % (symbol)
     req = Request(url)
+    #print(symbol)
     resp = urlopen(req)
     content = resp.read().decode().strip().splitlines()
+    #print(content)
     content = float(re.findall('[\d.]+', content[6])[0])
     return content
 
@@ -103,7 +105,7 @@ def update_all(folio):
     reports = []
     d = {}
     for l in folio:
-        p = float(request(l['symbol'], 'l1'))
+        p = float(google_request(l['symbol'], 'l1'))
         alert, report, sortval = update(l, p)
         if alert:
             alerts += alert + '\n'
