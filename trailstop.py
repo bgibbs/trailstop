@@ -21,6 +21,8 @@ def yahoo_request(symbol, stat):
     req = Request(url)
     resp = urlopen(req)
     content = resp.read().decode().strip()
+    #print(url)
+    #print(content)
     return content
 
 import re
@@ -28,6 +30,7 @@ def google_request(symbol, stat):
     url = 'http://www.google.com/finance/info?q=%s&' % (symbol)
     req = Request(url)
     #print(symbol)
+    #print(url)
     resp = urlopen(req)
     content = resp.read().decode().strip().splitlines()
     #print(content)
@@ -105,7 +108,7 @@ def update_all(folio):
     reports = []
     d = {}
     for l in folio:
-        p = float(google_request(l['symbol'], 'l1'))
+        p = float(yahoo_request(l['symbol'], 'l1'))
         alert, report, sortval = update(l, p)
         if alert:
             alerts += alert + '\n'
