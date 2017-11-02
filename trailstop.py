@@ -27,25 +27,34 @@ def yahoo_request(symbol, stat):
 
 import re
 def google_request(symbol, stat):
-    # old way did not require scraping
-    #url = 'http://www.google.com/finance/info?q=%s&' % (symbol)
-    url = 'http://finance.google.com/finance?q=%s&' % (symbol)
+    """See http://www.networkerror.org/component/content/article/
+    1-technical-wootness/44-googles-undocumented-finance-api.html"
+
+    q - Stock symbol
+    x - Stock exchange symbol on which stock is traded (ex: NASD)
+    i - Interval size in seconds (86400 = 1 day intervals)
+    p - Period. (A number followed by a "d" or "Y", eg. Days or years. Ex: 40Y = 40 years.)
+    f - What data do you want? d (date - timestamp/interval, c - close, v - volume, etc...) Note: Column order may not match what you specify here
+    df - ??
+    auto - ??
+    ei - ??
+    ts - Starting timestamp (Unix format). If blank, it uses today.
+
+    http://finance.google.com/finance/getprices?q=GOOG&p=1d&f=c
+    """
+    url = 'http://finance.google.com/finance/getprices?q=%s&p=1d&f=c' % (symbol)
     req = Request(url)
     #print(symbol)
-    #print(url)
+    print(url)
     resp = urlopen(req)
-    content = resp.read().decode() #.strip().splitlines()
-    m = re.search('"price".*?content="(\d+\.\d+)', content, re.DOTALL)
-    if m:
-        return m.group(1)
-    else:
-        print(content)
-        print('Failed')
-        sys.exit(1)
-
-#    content = float(re.findall('[\d.]+', content[6])[0])
+    content = resp.read() #.decode() #.strip().splitlines()
+    #content = float(re.findall('[\d.]+', content[6])[0])
+    print(content)
+    res = content.splitlines()[-1]
 #    print(content)
-    return content
+    print('zzz')
+    print(res)
+    return res
 
 def update(l, p):
     stop = l['stop']
