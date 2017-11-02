@@ -10,23 +10,34 @@ else:
     from urllib.request import Request, urlopen
 
 
-def yahoo_request(symbol, stat):
+def yahoo_request(symbol):
     """from https://github.com/cgoldberg/ystockquote/blob/master/ystockquote.py
     l1 = last trade price: closing price if after 4PM
     p = previous close: 2 days old if after 4.
     k = 52 wk high
     j = 52 wk low
     """
-    url = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=%s' % (symbol, stat)
+    url = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=%s' % (symbol, 'l1')
     req = Request(url)
     resp = urlopen(req)
     content = resp.read().decode().strip()
     #print(url)
     #print(content)
-    return content
+    return float(content)
 
 import re
-def google_request(symbol, stat):
+def google_request2(symbol):
+    url = 'http://finance.google.com/finance?q=%s&' % (symbol)
+    resp = urlopen(url)
+    content = resp.read().decode() #.strip().splitlines()
+    m = re.search('"price".*?content="(\d+\.\d+)', content, re.DOTALL)
+    #print(content)
+    #print(m)
+    if m:
+        return float(m.group(1))
+    raise LookupError
+
+def google_request(symbol):
     """See http://www.networkerror.org/component/content/article/
     1-technical-wootness/44-googles-undocumented-finance-api.html"
 
@@ -45,16 +56,13 @@ def google_request(symbol, stat):
     url = 'http://finance.google.com/finance/getprices?q=%s&p=1d&f=c' % (symbol)
     req = Request(url)
     #print(symbol)
-    print(url)
+    #print(url)
     resp = urlopen(req)
     content = resp.read() #.decode() #.strip().splitlines()
     #content = float(re.findall('[\d.]+', content[6])[0])
-    print(content)
+    #print(content)
     res = content.splitlines()[-1]
-#    print(content)
-    print('zzz')
-    print(res)
-    return res
+    return float(res)
 
 def update(l, p):
     stop = l['stop']
@@ -122,13 +130,30 @@ def update(l, p):
     l['low'] = min(low, p)
     return alert, report, v
 
+def get_quote(sym):
+    try:
+        p = google_request(sym)
+    except:
+        print('%s first request failed' % sym)
+        try:
+            p = google_request2(sym)
+        except:
+            print('%s second request failed' % sym)
+            return -1
+    return p
+
 def update_all(folio):
     alerts = ''
     reports = []
     d = {}
     for l in folio:
-        p = float(yahoo_request(l['symbol'], 'l1'))
-        alert, report, sortval = update(l, p)
+        p = get_quote(l['symbol'])
+        if p < 0:
+            alert = ''
+            report = '%s Failed lookup' % (l['symbol'])
+            sortval = 0
+        else:
+            alert, report, sortval = update(l, p)
         if alert:
             alerts += alert + '\n'
         d[report] = -sortval
@@ -174,59 +199,63 @@ def send(serv, addr, passw, subj, text):
     server.sendmail(addr, addr, 'Subject: %s\n\n%s' % (subj, text))
     server.quit()
 
-parser = argparse.ArgumentParser(
-        description='Initialize or update stop loss csv files and mail report.',
-        )
-parser.add_argument('-i', '--start', default = False,
-        help = 'Use this to initialize quotes from a yahoo or empty portfolio. '
-               'Anything not already in the portfolio is added to it '
-               'With a default stop and last price  as high/low');
-parser.add_argument('-f', '--folio', default = 'folio.csv',
-        help = 'Your portfolio CSV file. Initialize this file or add to it '
-               'using --start option.  Edit it by hand to maintain your stop '
-               'losses')
-parser.add_argument('-s', '--default_stop', default = '-20%',
-        help = 'Default stop loss.  Used only with --start when initializing.')
-parser.add_argument('-t', '--smtp', default = 'smtp.gmail.com:587',
-        help = 'SMTP server to receive the report.')
-parser.add_argument('-a', '--addr', default = False,
-        help = 'The mail address that receives the report. If not provided '
-               'the report goes to stdout in plain text.')
-parser.add_argument('-p', '--passw', default = False,
-        help = 'SMTP send password.')
-args = parser.parse_args()
+if __name__ == '__main__':
 
-try:
-    f = open(args.folio)
-    folio = read(f)
+    parser = argparse.ArgumentParser(
+            description='Initialize or update stop loss csv files and mail '
+                        'report.',
+            )
+    parser.add_argument('-i', '--start', default = False,
+            help = """Use this to initialize quotes from a yahoo or empty
+            portfolio.  Anything not already in the portfolio is added to it '
+            With a default stop and last price  as high/low""");
+    parser.add_argument('-f', '--folio', default = 'folio.csv',
+            help = """Your portfolio CSV file. Initialize this file or add to it
+            using --start option.  Edit it by hand to maintain your stop
+            losses""")
+    parser.add_argument('-s', '--default_stop', default = '-20%',
+            help = """Default stop loss.  Used only with --start when
+            initializing.""")
+    parser.add_argument('-t', '--smtp', default = 'smtp.gmail.com:587',
+            help = 'SMTP server to receive the report.')
+    parser.add_argument('-a', '--addr', default = False,
+            help = 'The mail address that receives the report. If not provided '
+                   'the report goes to stdout in plain text.')
+    parser.add_argument('-p', '--passw', default = False,
+            help = 'SMTP send password.')
+    args = parser.parse_args()
+
+    try:
+        f = open(args.folio)
+        folio = read(f)
+        f.close()
+    except IOError:
+        folio = []
+        if args.start == False:
+            # when initializing from a yahoo like portfolio folio.csv is not
+            # necessary
+            sys.stderr.write('Unable to open [%s] for reading.\n' % args.folio)
+            sys.exit(1)
+
+    if args.start:
+        f = open(args.start)
+        new = start(f, args.default_stop)
+        merge(folio, new)
+        f.close()
+
+    alerts, reports = update_all(folio)
+
+    f = open(args.folio, 'w')
+    write(f, folio)
     f.close()
-except IOError:
-    folio = []
-    if args.start == False:
-        # when initializing from a yahoo like portfolio folio.csv is not
-        # necessary
-        sys.stderr.write('Unable to open [%s] for reading.\n' % args.folio)
-        sys.exit(1)
 
-if args.start:
-    f = open(args.start)
-    new = start(f, args.default_stop)
-    merge(folio, new)
-    f.close()
+    report = 'ALERTS:\n%s\n\nREPORTS:\n%s\n' % (alerts or 'NONE', reports)
 
-alerts, reports = update_all(folio)
+    if args.addr and args.passw:
+        subj = '%sTrail Stop Portfolio Report' % (alerts and '[ALERTS]' or '')
+        send(args.smtp, args.addr, args.passw, subj, report)
+    else:
+        sys.stdout.write(report)
 
-f = open(args.folio, 'w')
-write(f, folio)
-f.close()
-
-report = 'ALERTS:\n%s\n\nREPORTS:\n%s\n' % (alerts or 'NONE', reports)
-
-if args.addr and args.passw:
-    subj = '%sTrail Stop Portfolio Report' % (alerts and '[ALERTS]' or '')
-    send(args.smtp, args.addr, args.passw, subj, report)
-else:
-    sys.stdout.write(report)
-
-   
+       
 
