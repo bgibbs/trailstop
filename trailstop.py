@@ -27,14 +27,24 @@ def yahoo_request(symbol, stat):
 
 import re
 def google_request(symbol, stat):
-    url = 'http://www.google.com/finance/info?q=%s&' % (symbol)
+    # old way did not require scraping
+    #url = 'http://www.google.com/finance/info?q=%s&' % (symbol)
+    url = 'http://finance.google.com/finance?q=%s&' % (symbol)
     req = Request(url)
     #print(symbol)
     #print(url)
     resp = urlopen(req)
-    content = resp.read().decode().strip().splitlines()
-    #print(content)
-    content = float(re.findall('[\d.]+', content[6])[0])
+    content = resp.read().decode() #.strip().splitlines()
+    m = re.search('"price".*?content="(\d+\.\d+)', content, re.DOTALL)
+    if m:
+        return m.group(1)
+    else:
+        print(content)
+        print('Failed')
+        sys.exit(1)
+
+#    content = float(re.findall('[\d.]+', content[6])[0])
+#    print(content)
     return content
 
 def update(l, p):
