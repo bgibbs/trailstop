@@ -131,14 +131,18 @@ def update(l, p):
     return alert, report, v
 
 def get_quote(sym):
+    #    try:
+        #p = yahoo_request(sym.split(':')[-1])
+    #except:
+    #    print('Yahoo request failed.' % sym)
     try:
         p = google_request(sym)
     except:
-        print('%s first request failed' % sym)
+        print('%s first Google request failed' % sym)
         try:
             p = google_request2(sym)
         except:
-            print('%s second request failed' % sym)
+            print('%s second Google request failed' % sym)
             return -1
     return p
 
