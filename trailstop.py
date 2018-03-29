@@ -4,6 +4,7 @@ import sys
 import argparse
 import csv
 import smtplib
+import json
 if int(sys.version[0]) < 3:
     from urllib2 import Request, urlopen
 else:
@@ -130,6 +131,17 @@ def update(l, p):
     l['low'] = min(low, p)
     return alert, report, v
 
+def ameritrade_request(apikey, symbols):
+    syms = '%2C'.join(symbols)
+    url = 'https://api.tdameritrade.com/v1/marketdata/quotes?apikey=%s' \
+          '%%40AMER.OAUTHAP&symbol=%s' % (apikey, syms)
+    req = Request(url)
+    resp = urlopen(req)
+    content = resp.read()
+    d = json.loads(content)
+    closes = [float(d[s]['closePrice']) for s in symbols]
+    return closes
+
 def get_quote(sym):
     #    try:
         #p = yahoo_request(sym.split(':')[-1])
@@ -158,6 +170,22 @@ def update_all(folio):
             sortval = 0
         else:
             alert, report, sortval = update(l, p)
+        if alert:
+            alerts += alert + '\n'
+        d[report] = -sortval
+        reports.append(report)
+    reports = sorted(reports, key = lambda r : d[r])
+    reports = '\n'.join(reports)
+    return alerts, reports
+
+def update_all_ameritrade(folio, apikey):
+    alerts = ''
+    reports = []
+    d = {}
+    symbols = [l['symbol'] for l in folio]
+    prices = ameritrade_request(apikey, symbols)
+    for l,p in zip(folio, prices):
+        alert, report, sortval = update(l, p)
         if alert:
             alerts += alert + '\n'
         d[report] = -sortval
@@ -227,6 +255,8 @@ if __name__ == '__main__':
                    'the report goes to stdout in plain text.')
     parser.add_argument('-p', '--passw', default = False,
             help = 'SMTP send password.')
+    parser.add_argument('-k', '--apikey', default = None,
+            help = 'TD Ameritrade API Key for quote requests.')
     args = parser.parse_args()
 
     try:
@@ -247,7 +277,10 @@ if __name__ == '__main__':
         merge(folio, new)
         f.close()
 
-    alerts, reports = update_all(folio)
+    if args.apikey:
+        alerts, reports = update_all_ameritrade(folio, args.apikey)
+    else:
+        alerts, reports = update_all(folio)
 
     f = open(args.folio, 'w')
     write(f, folio)
