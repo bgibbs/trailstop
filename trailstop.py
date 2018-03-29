@@ -139,7 +139,7 @@ def ameritrade_request(apikey, symbols):
     resp = urlopen(req)
     content = resp.read()
     d = json.loads(content)
-    closes = [float(d[s]['closePrice']) for s in symbols]
+    closes = [float(d[s]['lastPrice']) for s in symbols]
     return closes
 
 def get_quote(sym):
@@ -185,6 +185,7 @@ def update_all_ameritrade(folio, apikey):
     symbols = [l['symbol'] for l in folio]
     prices = ameritrade_request(apikey, symbols)
     for l,p in zip(folio, prices):
+        print(l['symbol'], p)
         alert, report, sortval = update(l, p)
         if alert:
             alerts += alert + '\n'
