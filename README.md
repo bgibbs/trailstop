@@ -61,3 +61,10 @@ Instructions:
 
 5. If you don't use gmail, then figure out the smtp address for your mail
    server and pass it with the --smtp option.
+
+6. Some notes about getting reliable closing prices.  The Yahoo Finance API 
+   no longer seems to work after many years of reliable use.  The Google API
+   is unreliable often failing to return a quote or multiple quotes.
+   I have added a TD Ameritrade API.  This requires the user to create
+   a developer account at TD Ameritrade and register an application.
+   It is not necessary to be a TD Ameritrade customer.
